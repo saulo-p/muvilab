@@ -38,7 +38,7 @@ class Annotator:
 
         # Hard coded settings
         self.timebar_h = 20  # Pixels
-        self.rect_bord = 4  # Rectangle border
+        self.rect_bord = 2  # Rectangle border
         # Debug
         self.debug_verbose = 0
 
@@ -51,7 +51,7 @@ class Annotator:
         video_frame_counter = 0
         # Generate clips path
         vid_name = os.path.splitext(os.path.basename(video_file))[0]
-        clip_name = os.path.join(output_folder, '%s_clip_%%08d.mp4' % vid_name)
+        clip_name = os.path.join(output_folder, '%s_clip_%%08d.avi' % vid_name)
         # Calculate the overlap in number of frames
         assert 0 <= overlap < 1, 'The overlap must be in the range [0, 1['
         # Open the source video and read the framerate
@@ -82,7 +82,7 @@ class Annotator:
             if init:
                 frame_size = frame.shape
                 video_length = int(video_cap.get(cv2.CAP_PROP_FRAME_COUNT))
-                fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+                fourcc = cv2.VideoWriter_fourcc(*'XVID')
                 clip_frame_counter = 0
                 video_frame_counter = 0
                 init = False
