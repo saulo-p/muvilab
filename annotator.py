@@ -43,7 +43,7 @@ class Annotator:
         self.debug_verbose = 0
 
 
-    def video_to_clips(self, video_file, output_folder, clip_length: Union[int, float], resize=1, overlap=0, preprocessing_pipeline={}):
+    def video_to_clips(self, video_file, output_folder, clip_length: Union[int, float], resize=1, overlap=0, preprocessing_pipeline=[]):
         '''Opens a long video file and saves it into several consecutive clips
         of predefined length'''
         # Initialise the counters
