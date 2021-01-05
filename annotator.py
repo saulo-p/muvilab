@@ -312,7 +312,7 @@ class Annotator:
             self.set_label(label['name'], x_click, y_click)
 
         # Detect right click to remove label
-        if event == cv2.EVENT_RBUTTONDOWN:
+        if event == cv2.EVENT_MBUTTONDOWN:
             self.set_label('', x_click, y_click)
 
 
