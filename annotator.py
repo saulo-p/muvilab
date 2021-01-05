@@ -43,7 +43,7 @@ class Annotator:
         self.debug_verbose = 0
 
 
-    def video_to_clips(self, video_file, output_folder, clip_length: Union[int, float], resize=1, overlap=0):
+    def video_to_clips(self, video_file, output_folder, clip_length: Union[int, float], resize=1, overlap=0, preprocessing_pipeline={}):
         '''Opens a long video file and saves it into several consecutive clips
         of predefined length'''
         # Initialise the counters
@@ -65,15 +65,19 @@ class Annotator:
         init = True
         while video_cap.isOpened():
             # Get the next video frame
-            _, frame = video_cap.read()
+            success, frame = video_cap.read()
+            if not success:
+                print('There was a problem processing frame %d' % video_frame_counter)
 
             # Resize the frame
             if resize != 1 and frame is not None:
                 frame = cv2.resize(frame, (0, 0), fx=resize, fy=resize)
-                
-            if frame is None:
-                print('There was a problem processing frame %d' % video_frame_counter)
-            
+
+            # Preprocess the frame
+            for func in preprocessing_pipeline:
+                # print(func['functor'], '(', func['args'], func['kwargs'], ')')
+                frame = func['functor'](frame, *(func['args']), **(func['kwargs']))
+
             # Initialise the video
             if init:
                 frame_size = frame.shape
