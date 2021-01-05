@@ -50,13 +50,13 @@ class Annotator:
         clip_counter = 0
         video_frame_counter = 0
         # Generate clips path
-        vid_name = os.path.splitext(os.path.basename(video_file))[0]
+        vid_name = video_file.split(sep=os.path.sep)[-2]
         clip_name = os.path.join(output_folder, '%s_clip_%%08d.avi' % vid_name)
         # Calculate the overlap in number of frames
         assert 0 <= overlap < 1, 'The overlap must be in the range [0, 1['
         # Open the source video and read the framerate
         video_cap = cv2.VideoCapture(video_file)
-        fps = int(video_cap.get(cv2.CAP_PROP_FPS))
+        fps = int(round(video_cap.get(cv2.CAP_PROP_FPS)))
         if type(clip_length) == float:
             # Convert clip_length from time [seconds] to #frames
             print('Source FPS:', fps)
