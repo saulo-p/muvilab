@@ -2,12 +2,13 @@
 
 import os
 import json
-import time
 import threading
+import time
+from typing import Union
 from shutil import copyfile
 from matplotlib import pyplot as plt
-import numpy as np
 import cv2
+import numpy as np
 from tqdm import tqdm
 
 version_info = (0, 2, 9)
@@ -42,7 +43,7 @@ class Annotator:
         self.debug_verbose = 0
 
 
-    def video_to_clips(self, video_file, output_folder, resize=1, overlap=0, clip_length=90):
+    def video_to_clips(self, video_file, output_folder, clip_length: Union[int, float], resize=1, overlap=0):
         '''Opens a long video file and saves it into several consecutive clips
         of predefined length'''
         # Initialise the counters
@@ -53,10 +54,14 @@ class Annotator:
         clip_name = os.path.join(output_folder, '%s_clip_%%08d.mp4' % vid_name)
         # Calculate the overlap in number of frames
         assert 0 <= overlap < 1, 'The overlap must be in the range [0, 1['
-        frames_overlap = int(clip_length*overlap)
         # Open the source video and read the framerate
         video_cap = cv2.VideoCapture(video_file)
-        fps = video_cap.get(cv2.CAP_PROP_FPS)
+        fps = int(video_cap.get(cv2.CAP_PROP_FPS))
+        if type(clip_length) == float:
+            # Convert clip_length from time [seconds] to #frames
+            print('Source FPS:', fps)
+            clip_length = int(clip_length*fps)
+        frames_overlap = int(clip_length*overlap)
         init = True
         while video_cap.isOpened():
             # Get the next video frame
