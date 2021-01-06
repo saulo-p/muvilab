@@ -75,7 +75,7 @@ def show_mouth_roi(image, src_path):
 
 
 def create_clips(input_videos, output_dir, clips_length, clips_overlap, crop_mouth_roi):
-
+    # Define preprocessing pipeline
     if crop_mouth_roi:
         preprocessing = [
             {
@@ -88,9 +88,9 @@ def create_clips(input_videos, output_dir, clips_length, clips_overlap, crop_mou
         preprocessing = list()
 
     if not os.path.exists(output_dir):
-        os.mkdir(output_dir)
+        os.makedirs(output_dir)
     elif os.listdir(output_dir):
-        # If directory is not empty, ask the user if removal
+        # If directory is not empty, ask user if content should be deleted.
         ans = None
         while ans not in {'y', 'n'}:
             ans = input('Directory {} is not empty. Do you want to remove its contents? y or n: '.format(output_dir))
@@ -112,6 +112,7 @@ def create_clips(input_videos, output_dir, clips_length, clips_overlap, crop_mou
             Annotator.video_to_clips(vid, output_dir, clips_length, overlap=clips_overlap, preprocessing_pipeline=preprocessing)
         except Exception as e:
             logger.error('Error processing video {}: '.format(vid), e)
+
 
 def parse_cli_args():
     parser = argparse.ArgumentParser(
@@ -171,8 +172,7 @@ def parse_cli_args():
     with open(args.input_videos_file, 'r') as fin:
         videos = fin.read().splitlines()
 
-    return videos, args.output_dir, clips_length, args.clips_overlap, args.crop_mouth
-
+    return videos, args.output_dir, clips_length, args.clips_overlap, bool(args.crop_mouth)
 
 if __name__ == "__main__":
 
