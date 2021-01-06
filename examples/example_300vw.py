@@ -100,7 +100,7 @@ preprocessing = [
 # Split the video into clips
 print('Generating clips from the video...')
 frame_id = 1
-annotator.video_to_clips(os.path.join(PATH_300VW, str(IDX_300VW), 'vid.avi'), CLIPS_DIR, clip_length=1., overlap=0, resize=1, preprocessing_pipeline=preprocessing)
+Annotator.video_to_clips(os.path.join(PATH_300VW, str(IDX_300VW), 'vid.avi'), CLIPS_DIR, clip_length=1., overlap=0, resize=1, preprocessing_pipeline=preprocessing)
 
 # Run the annotator
 annotator.main()

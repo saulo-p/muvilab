@@ -43,7 +43,8 @@ class Annotator:
         self.debug_verbose = 0
 
 
-    def video_to_clips(self, video_file, output_folder, clip_length: Union[int, float], resize=1, overlap=0, preprocessing_pipeline=[]):
+    @staticmethod
+    def video_to_clips(video_file, output_folder, clip_length: Union[int, float], resize=1, overlap=0, preprocessing_pipeline=[]):
         '''Opens a long video file and saves it into several consecutive clips
         of predefined length'''
         # Initialise the counters
@@ -59,7 +60,6 @@ class Annotator:
         fps = int(round(video_cap.get(cv2.CAP_PROP_FPS)))
         if type(clip_length) == float:
             # Convert clip_length from time [seconds] to #frames
-            print('Source FPS:', fps)
             clip_length = int(clip_length*fps)
         frames_overlap = int(clip_length*overlap)
         init = True
