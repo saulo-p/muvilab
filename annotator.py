@@ -169,16 +169,35 @@ class Annotator:
         else:
             print('Annotations successfully loaded')
 
+    def define_page_properties(self, video_file):
+        cap = cv2.VideoCapture(video_file)
+
+        # Adjust delay
+        self.delay = int(1000/cap.get(cv2.CAP_PROP_FPS))
+
+        # Adjust mosaic dinamically
+        _, sample_frame = cap.read()
+        cap.release()
+        cap = cv2.VideoCapture(video_file)
+
+        self.frame_dim = [int(bf*self.image_resize) for bf in sample_frame.shape]
+
+        # Recalculate number of videos per row/col
+        self.Ny = int(np.sqrt(self.N_show_approx/self.screen_ratio * self.frame_dim[1]/self.frame_dim[0]))
+        self.Nx = int(np.sqrt(self.N_show_approx*self.screen_ratio * self.frame_dim[0]/self.frame_dim[1]))
+
 
     def build_pagination(self, filter_label=False, filter=None):
         '''Take a list of videos in input and create a pagination array that
         splits the videos into pages'''
+
+        self.pagination = [[]]
+
         # Filter the videos by labels if requested
         if filter_label:
             # TODO: This could be done in a more efficient way by preallocating pagination
-            self.pagination = [[]]
             p = 0
-            for vid in range(len(self.dataset)):                 
+            for vid in range(len(self.dataset)):
                 # Add a new page
                 if len(self.pagination[p]) == self.Nx*self.Ny:
                     self.pagination.append([])
@@ -193,11 +212,29 @@ class Annotator:
 
         else:
             # Create the pagination
-            self.N_pages = int(np.ceil(len(self.dataset)/(self.Nx*self.Ny)))
-            self.pagination = [[] for _ in range(self.N_pages)]
-            for vid in range(len(self.dataset)):
-                p = int(np.floor(vid/(self.Nx*self.Ny)))
-                self.pagination[p].append(vid)
+            self.N_pages = 0
+            prev_vid = 'void'
+            new_page = False
+            for idx, vid in enumerate(self.dataset):
+                cur_vid = vid['video'][:-18] # TODO: instead of gambiarra, match with'%s_clip_%%08d.avi'
+
+                if cur_vid != prev_vid:
+                    # video changed
+                    prev_vid = cur_vid
+                    new_page = True
+
+                    self.define_page_properties(vid['video'])
+
+                elif len(self.pagination[self.N_pages]) == self.Nx*self.Ny:
+                    # page is full
+                    new_page = True
+
+                if new_page:
+                    self.pagination.append([])
+                    self.N_pages += 1
+
+                new_page = False
+                self.pagination[self.N_pages].append(idx)
 
 
     def mosaic_thread(self, e_mosaic_ready, e_page_request, e_thread_off):
@@ -256,9 +293,10 @@ class Annotator:
                 print("The list of videos doesn't fit in the mosaic.")
                 break
             
+            self.define_page_properties(video_file)
+
             # Open the video
             cap = cv2.VideoCapture(video_file)
-            
             # Load the video frames
             while cap.isOpened():
                 _, frame = cap.read()
@@ -677,14 +715,7 @@ class Annotator:
         else:
             # Automatic loop duration based on fps
             self.delay = int(1000/cap.get(cv2.CAP_PROP_FPS))
-            
-        _, sample_frame = cap.read()
-        self.frame_dim = [int(bf*self.image_resize) for bf in sample_frame.shape]
-        cap.release()
-        
-        # Calculate number of videos per row/col
-        self.Ny = int(np.sqrt(self.N_show_approx/self.screen_ratio * self.frame_dim[1]/self.frame_dim[0]))
-        self.Nx = int(np.sqrt(self.N_show_approx*self.screen_ratio * self.frame_dim[0]/self.frame_dim[1]))
+
  
         # Load existing annotations and build pagination
         print('Loading annotations...')

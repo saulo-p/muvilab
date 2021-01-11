@@ -54,6 +54,7 @@ def show_mouth_roi(image, src_path):
     MOUTH_OUTER_IDXS = [i for i in range(48,60)]
 
     landmarks_filename = os.path.join(src_path, 'annot', '0'*(6-len(str(globals()['frame_id']))) + str(globals()['frame_id']) + '.pts')
+    globals()['frame_id'] += 1
     try:
         landmarks_np = read_pts(landmarks_filename)
     except Exception as e:
@@ -67,7 +68,6 @@ def show_mouth_roi(image, src_path):
     BORDER = 10
     roi = image[(y - BORDER):(y + h + BORDER), (x - BORDER):(x + w + BORDER)]
 
-    globals()['frame_id'] += 1
 
     roi = cv2.resize(roi,(64, 32), interpolation=cv2.INTER_LINEAR)
 
@@ -96,13 +96,13 @@ def create_clips(input_videos, output_dir, clips_length, clips_overlap, crop_mou
             ans = input('Directory {} is not empty. Do you want to remove its contents? y or n: '.format(output_dir))
         else:
             if ans == 'y':
-                logger.info('Removing contents of directory {}'.format(output_dir))
+                logger.info('Removing contents of directory %s', output_dir)
                 contents = glob.glob(os.path.join(output_dir,'*'))
                 for c in contents:
                     try:
                         os.remove(c)
                     except:
-                        logger.warning('Failed to remove file {}'.format(c))
+                        logger.warning('Failed to remove file %s', c)
 
     for vid in input_videos:
         if crop_mouth_roi:
@@ -112,6 +112,9 @@ def create_clips(input_videos, output_dir, clips_length, clips_overlap, crop_mou
             Annotator.video_to_clips(vid, output_dir, clips_length, overlap=clips_overlap, preprocessing_pipeline=preprocessing)
         except Exception as e:
             logger.error('Error processing video {}: '.format(vid), e)
+        else:
+            logger.info('Video %s converted to clips succesfully.', vid)
+
 
 
 def parse_cli_args():
@@ -155,7 +158,7 @@ def parse_cli_args():
     parser.add_argument('--crop-mouth',
         help='Whether to create clips of mouth ROIs only. 0: no crop, 1: crop',
         type=int,
-        default=1
+        default=0
     )
 
     args = parser.parse_args()
