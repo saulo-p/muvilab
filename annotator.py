@@ -191,7 +191,7 @@ class Annotator:
         '''Take a list of videos in input and create a pagination array that
         splits the videos into pages'''
 
-        self.pagination = [[]]
+        self.pagination = list()
 
         # Filter the videos by labels if requested
         if filter_label:
@@ -212,28 +212,24 @@ class Annotator:
 
         else:
             # Create the pagination
-            self.N_pages = 0
+            self.N_pages = -1
             prev_vid = 'void'
-            new_page = False
             for idx, vid in enumerate(self.dataset):
                 cur_vid = vid['video'][:-18] # TODO: instead of gambiarra, match with'%s_clip_%%08d.avi'
 
                 if cur_vid != prev_vid:
                     # video changed
                     prev_vid = cur_vid
-                    new_page = True
-
-                    self.define_page_properties(vid['video'])
-
-                elif len(self.pagination[self.N_pages]) == self.Nx*self.Ny:
-                    # page is full
-                    new_page = True
-
-                if new_page:
                     self.pagination.append([])
                     self.N_pages += 1
 
-                new_page = False
+                    self.define_page_properties(vid['video'])
+                elif len(self.pagination[self.N_pages]) == self.Nx*self.Ny:
+                    # page is full
+                    self.pagination.append([])
+                    self.N_pages += 1
+
+
                 self.pagination[self.N_pages].append(idx)
 
 
@@ -283,18 +279,19 @@ class Annotator:
         '''This function loads videos and arrange them into a mosaic.'''
         # Select the videos from the pagination
         videos_list = [self.dataset[vid]['video'] for vid in self.pagination[page]]
+
         init = True
         i_scr, j_scr, k_time = 0, 0, 0
         # Loop over all the video files in the day folder
         for vi, video_file in enumerate(videos_list):
            
+            self.define_page_properties(video_file)
+
             # Deal with long lists
             if vi == self.Nx*self.Ny:
                 print("The list of videos doesn't fit in the mosaic.")
                 break
             
-            self.define_page_properties(video_file)
-
             # Open the video
             cap = cv2.VideoCapture(video_file)
             # Load the video frames
