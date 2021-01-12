@@ -50,8 +50,13 @@ def read_pts(filename: Union[str, bytes, Path]) -> np.ndarray:
         raise ValueError(f"Failed to load all {rows} points")
     return points
 
-def show_mouth_roi(image, src_path):
-    MOUTH_OUTER_IDXS = [i for i in range(48,60)]
+def crop_roi(image, src_path, crop_type):
+    if crop_type == 'face':
+        CROP_IDXS = [i for i in range(0,27)]
+        resize_shape=(100,100)
+    elif crop_type == 'mouth':
+        CROP_IDXS = [i for i in range(48,60)]
+        resize_shape=(64, 32)
 
     landmarks_filename = os.path.join(src_path, 'annot', '0'*(6-len(str(globals()['frame_id']))) + str(globals()['frame_id']) + '.pts')
     globals()['frame_id'] += 1
@@ -61,25 +66,24 @@ def show_mouth_roi(image, src_path):
         print(e)
         return image
 
-    landmarks_mouth = landmarks_np[MOUTH_OUTER_IDXS, :]
+    landmarks_mouth = landmarks_np[CROP_IDXS, :]
 
     (x, y, w, h) = cv2.boundingRect(np.array(landmarks_mouth, dtype=np.int))
 
     BORDER = 10
     roi = image[(y - BORDER):(y + h + BORDER), (x - BORDER):(x + w + BORDER)]
 
-
-    roi = cv2.resize(roi,(64, 32), interpolation=cv2.INTER_LINEAR)
+    roi = cv2.resize(roi, resize_shape, interpolation=cv2.INTER_LINEAR)
 
     return roi
 
 
-def create_clips(input_videos, output_dir, clips_length, clips_overlap, crop_mouth_roi):
+def create_clips(input_videos, output_dir, clips_length, clips_overlap, crop_type=None):
     # Define preprocessing pipeline
-    if crop_mouth_roi:
+    if crop_type is not None:
         preprocessing = [
             {
-                'functor': show_mouth_roi,
+                'functor': crop_roi,
                 'args': list(),
                 'kwargs': dict()
             }
@@ -105,9 +109,9 @@ def create_clips(input_videos, output_dir, clips_length, clips_overlap, crop_mou
                         logger.warning('Failed to remove file %s', c)
 
     for vid in input_videos:
-        if crop_mouth_roi:
+        if crop_type is not None:
             globals()['frame_id'] = 1
-            preprocessing[0]['args'] = [ os.path.dirname(vid) ]
+            preprocessing[0]['args'] = [os.path.dirname(vid), crop_type]
         try:
             Annotator.video_to_clips(vid, output_dir, clips_length, overlap=clips_overlap, preprocessing_pipeline=preprocessing)
         except Exception as e:
@@ -155,10 +159,9 @@ def parse_cli_args():
         default=0.
     )
 
-    parser.add_argument('--crop-mouth',
-        help='Whether to create clips of mouth ROIs only. 0: no crop, 1: crop',
-        type=int,
-        default=0
+    parser.add_argument('--crop-type',
+        help='Whether to generate clips of ROI crops. face: face ROI, mouth: mouth ROI',
+        type=str,
     )
 
     args = parser.parse_args()
@@ -175,13 +178,13 @@ def parse_cli_args():
     with open(args.input_videos_file, 'r') as fin:
         videos = fin.read().splitlines()
 
-    return videos, args.output_dir, clips_length, args.clips_overlap, bool(args.crop_mouth)
+    return videos, args.output_dir, clips_length, args.clips_overlap, args.crop_type
 
 if __name__ == "__main__":
 
-    videos_list, output_dir, clips_length, clips_overlap, do_crop_mouth = parse_cli_args()
+    videos_list, output_dir, clips_length, clips_overlap, crop_type = parse_cli_args()
 
     logger.info('Generating Clips...\nVideos: {}\nOutput directory: {}\nClip Length: {}\nClips Overlap: {}'.format(
         videos_list, output_dir, clips_length, clips_overlap))
 
-    create_clips(videos_list, output_dir, clips_length, clips_overlap, do_crop_mouth)
+    create_clips(videos_list, output_dir, clips_length, clips_overlap, crop_type)
