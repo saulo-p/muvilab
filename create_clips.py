@@ -73,7 +73,8 @@ def crop_roi(image, src_path, crop_type):
     BORDER = 10
     roi = image[(y - BORDER):(y + h + BORDER), (x - BORDER):(x + w + BORDER)]
 
-    roi = cv2.resize(roi, resize_shape, interpolation=cv2.INTER_LINEAR)
+    interpolation_method = cv2.INTER_AREA if roi.shape[0] > resize_shape[0] else cv2.INTER_LINEAR
+    roi = cv2.resize(roi, resize_shape, interpolation=interpolation_method)
 
     return roi
 
